@@ -48,13 +48,20 @@ type SignedTaskResponse struct {
 // reply doesn't need to be checked. If there are no errors, the task response is accepted
 // rpc framework forces a reply type to exist, so we put bool as a placeholder
 func (agg *Aggregator) ProcessSignedTaskResponse(signedTaskResponse *SignedTaskResponse, reply *bool) error {
+	// log signed task response
 	agg.logger.Infof("Received signed task response: %#v", signedTaskResponse)
+
+	// get task index
 	taskIndex := signedTaskResponse.TaskResponse.ReferenceTaskIndex
+
+	// get task response digest
 	taskResponseDigest, err := core.GetTaskResponseDigest(&signedTaskResponse.TaskResponse)
 	if err != nil {
 		agg.logger.Error("Failed to get task response digest", "err", err)
 		return TaskResponseDigestNotFoundError500
 	}
+
+	// add task response to task responses map
 	agg.taskResponsesMu.Lock()
 	if _, ok := agg.taskResponses[taskIndex]; !ok {
 		agg.taskResponses[taskIndex] = make(map[sdktypes.TaskResponseDigest]cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse)
@@ -64,6 +71,7 @@ func (agg *Aggregator) ProcessSignedTaskResponse(signedTaskResponse *SignedTaskR
 	}
 	agg.taskResponsesMu.Unlock()
 
+	// process new signature
 	err = agg.blsAggregationService.ProcessNewSignature(
 		context.Background(), taskIndex, signedTaskResponse.TaskResponse,
 		&signedTaskResponse.BlsSignature, signedTaskResponse.OperatorId,

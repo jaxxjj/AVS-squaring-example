@@ -26,6 +26,7 @@ func (o *Operator) registerOperatorOnStartup(
 	operatorEcdsaPrivateKey *ecdsa.PrivateKey,
 	mockTokenStrategyAddr common.Address,
 ) {
+	// register operator with eigenlayer
 	err := o.RegisterOperatorWithEigenlayer()
 	if err != nil {
 		// This error might only be that the operator was already registered with eigenlayer, so we don't want to fatal
@@ -34,7 +35,7 @@ func (o *Operator) registerOperatorOnStartup(
 		o.logger.Infof("Registered operator with eigenlayer")
 	}
 
-	// TODO(samlaf): shouldn't hardcode number here
+	// deposit into strategy
 	amount := big.NewInt(1000)
 	err = o.DepositIntoStrategy(mockTokenStrategyAddr, amount)
 	if err != nil {
@@ -42,6 +43,7 @@ func (o *Operator) registerOperatorOnStartup(
 	}
 	o.logger.Infof("Deposited %s into strategy %s", amount, mockTokenStrategyAddr)
 
+	// register operator with avs
 	err = o.RegisterOperatorWithAvs(operatorEcdsaPrivateKey)
 	if err != nil {
 		o.logger.Fatal("Error registering operator with avs", "err", err)
